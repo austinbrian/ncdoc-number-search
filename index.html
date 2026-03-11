@@ -17,11 +17,7 @@
       --accent-hover: #e04a41;
     }
 
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -30,17 +26,8 @@
       line-height: 1.5;
     }
 
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 2rem 1rem;
-    }
-
-    h1 {
-      font-size: 1.75rem;
-      font-weight: 700;
-      margin-bottom: 0.25rem;
-    }
+    .container { max-width: 1400px; margin: 0 auto; padding: 2rem 1rem; }
+    h1 { font-size: 1.75rem; font-weight: 700; margin-bottom: 0.25rem; }
 
     .subtitle {
       font-family: Georgia, 'Times New Roman', serif;
@@ -58,232 +45,116 @@
     }
 
     label {
-      display: block;
-      font-weight: 600;
-      font-size: 0.875rem;
-      margin-bottom: 0.5rem;
-      letter-spacing: 0.02em;
+      display: block; font-weight: 600; font-size: 0.875rem;
+      margin-bottom: 0.5rem; letter-spacing: 0.02em;
     }
 
     textarea {
-      width: 100%;
-      min-height: 120px;
-      padding: 0.75rem;
-      border: 1px solid var(--border);
-      border-radius: 4px;
+      width: 100%; min-height: 100px; padding: 0.75rem;
+      border: 1px solid var(--border); border-radius: 4px;
       font-family: 'SF Mono', 'Fira Code', 'Fira Mono', monospace;
-      font-size: 0.875rem;
-      resize: vertical;
-      line-height: 1.6;
+      font-size: 0.875rem; resize: vertical; line-height: 1.6;
     }
 
     textarea:focus {
-      outline: none;
-      border-color: var(--accent);
+      outline: none; border-color: var(--accent);
       box-shadow: 0 0 0 2px rgba(255, 88, 78, 0.15);
     }
 
     .hint {
-      color: var(--text-muted);
-      font-size: 0.8rem;
-      margin-top: 0.5rem;
+      color: var(--text-muted); font-size: 0.8rem; margin-top: 0.5rem;
       font-family: Georgia, 'Times New Roman', serif;
     }
 
-    .actions {
-      display: flex;
-      gap: 0.75rem;
-      margin-top: 1rem;
-      align-items: center;
-    }
+    .actions { display: flex; gap: 0.75rem; margin-top: 1rem; align-items: center; flex-wrap: wrap; }
 
     button {
-      padding: 0.6rem 1.25rem;
-      border: none;
-      border-radius: 4px;
-      font-size: 0.875rem;
-      font-weight: 600;
-      cursor: pointer;
+      padding: 0.6rem 1.25rem; border: none; border-radius: 4px;
+      font-size: 0.875rem; font-weight: 600; cursor: pointer;
       transition: background 0.15s ease;
     }
 
-    .btn-primary {
-      background: var(--accent);
-      color: white;
-    }
-
-    .btn-primary:hover {
-      background: var(--accent-hover);
-    }
-
-    .btn-primary:disabled {
-      background: #ccc;
-      cursor: not-allowed;
-    }
-
-    .btn-secondary {
-      background: var(--bg-primary);
-      color: var(--text-secondary);
-      border: 1px solid var(--border);
-    }
-
-    .btn-secondary:hover {
-      background: var(--border);
-    }
-
-    .status {
-      font-size: 0.85rem;
-      color: var(--text-secondary);
-      font-family: Georgia, 'Times New Roman', serif;
-    }
+    .btn-primary { background: var(--accent); color: white; }
+    .btn-primary:hover { background: var(--accent-hover); }
+    .btn-primary:disabled { background: #ccc; cursor: not-allowed; }
+    .btn-secondary { background: var(--bg-primary); color: var(--text-secondary); border: 1px solid var(--border); }
+    .btn-secondary:hover { background: var(--border); }
+    .status { font-size: 0.85rem; color: var(--text-secondary); font-family: Georgia, 'Times New Roman', serif; }
 
     .progress-bar {
-      width: 100%;
-      height: 4px;
-      background: var(--border);
-      border-radius: 2px;
-      margin-bottom: 1rem;
-      overflow: hidden;
-      display: none;
+      width: 100%; height: 4px; background: var(--border);
+      border-radius: 2px; margin-bottom: 1rem; overflow: hidden; display: none;
     }
-
-    .progress-bar.active {
-      display: block;
-    }
-
+    .progress-bar.active { display: block; }
     .progress-fill {
-      height: 100%;
-      background: var(--accent);
-      border-radius: 2px;
-      transition: width 0.3s ease;
-      width: 0%;
+      height: 100%; background: var(--accent); border-radius: 2px;
+      transition: width 0.3s ease; width: 0%;
     }
 
-    .results-section {
-      display: none;
-    }
+    .results-section { display: none; }
+    .results-section.active { display: block; }
 
-    .results-section.active {
-      display: block;
+    .results-toolbar {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 0.75rem; gap: 0.75rem; flex-wrap: wrap;
     }
+    .results-toolbar h2 { font-size: 1.25rem; font-weight: 600; white-space: nowrap; }
+    .toolbar-right { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
 
-    .results-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1rem;
+    .search-box {
+      padding: 0.4rem 0.75rem; border: 1px solid var(--border); border-radius: 4px;
+      font-size: 0.8rem; width: 200px; outline: none;
     }
+    .search-box:focus { border-color: var(--accent); }
+    .search-box::placeholder { color: var(--text-muted); }
 
-    .results-header h2 {
-      font-size: 1.25rem;
-      font-weight: 600;
-    }
+    .toolbar-btn { padding: 0.4rem 0.75rem; font-size: 0.75rem; }
 
     .table-wrapper {
-      background: var(--bg-secondary);
-      border-radius: 8px;
-      box-shadow: 0 1px 3px var(--shadow);
-      overflow-x: auto;
+      background: var(--bg-secondary); border-radius: 8px;
+      box-shadow: 0 1px 3px var(--shadow); overflow-x: auto;
     }
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.85rem;
-    }
-
-    thead {
-      background: var(--bg-primary);
-    }
-
+    table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+    thead { background: var(--bg-primary); position: sticky; top: 0; z-index: 1; }
     th {
-      text-align: left;
-      padding: 0.75rem 1rem;
-      font-weight: 600;
-      font-size: 0.75rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: var(--text-secondary);
-      border-bottom: 2px solid var(--border);
-      white-space: nowrap;
+      text-align: left; padding: 0.6rem 0.6rem; font-weight: 600;
+      font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em;
+      color: var(--text-secondary); border-bottom: 2px solid var(--border);
+      white-space: nowrap; cursor: pointer; user-select: none;
     }
-
+    th:hover { color: var(--text-primary); }
+    th .sort-arrow { font-size: 0.6rem; margin-left: 0.25rem; opacity: 0.4; }
+    th.sorted .sort-arrow { opacity: 1; color: var(--accent); }
     td {
-      padding: 0.6rem 1rem;
-      border-bottom: 1px solid var(--border);
-      font-family: Georgia, 'Times New Roman', serif;
-      font-size: 0.85rem;
+      padding: 0.4rem 0.6rem; border-bottom: 1px solid var(--border);
+      font-size: 0.78rem; vertical-align: top;
     }
-
-    tr:last-child td {
-      border-bottom: none;
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #fafafa; }
+    .error-row td { color: var(--accent); font-style: italic; }
+    .cached-badge {
+      display: inline-block; font-size: 0.55rem; background: #e0f2fe;
+      color: #0369a1; padding: 0.05rem 0.25rem; border-radius: 3px;
+      margin-left: 0.2rem; font-family: sans-serif; vertical-align: middle;
     }
-
-    tr:hover td {
-      background: #fafafa;
-    }
-
-    .error-row td {
-      color: var(--accent);
-      font-style: italic;
-    }
-
-    .no-data {
-      color: var(--text-muted);
-      font-style: italic;
-    }
+    .hidden-row { display: none; }
 
     .errors-section {
-      margin-top: 1rem;
-      padding: 1rem;
-      background: #fff5f5;
-      border: 1px solid #fecaca;
-      border-radius: 8px;
-      display: none;
+      margin-top: 1rem; padding: 1rem; background: #fff5f5;
+      border: 1px solid #fecaca; border-radius: 8px; display: none;
     }
-
-    .errors-section.active {
-      display: block;
-    }
-
-    .errors-section h3 {
-      font-size: 0.9rem;
-      color: var(--accent);
-      margin-bottom: 0.5rem;
-    }
-
-    .errors-section ul {
-      list-style: none;
-      font-size: 0.85rem;
-      color: var(--text-secondary);
-    }
-
-    .errors-section li {
-      padding: 0.25rem 0;
-    }
-
-    .copy-btn {
-      padding: 0.4rem 0.75rem;
-      font-size: 0.75rem;
-    }
+    .errors-section.active { display: block; }
+    .errors-section h3 { font-size: 0.9rem; color: var(--accent); margin-bottom: 0.5rem; }
+    .errors-section ul { list-style: none; font-size: 0.85rem; color: var(--text-secondary); }
+    .errors-section li { padding: 0.25rem 0; }
 
     @media (max-width: 640px) {
-      .container {
-        padding: 1rem;
-      }
-
-      h1 {
-        font-size: 1.35rem;
-      }
-
-      .actions {
-        flex-direction: column;
-        align-items: stretch;
-      }
-
-      .status {
-        text-align: center;
-      }
+      .container { padding: 1rem; }
+      h1 { font-size: 1.35rem; }
+      .actions { flex-direction: column; align-items: stretch; }
+      .status { text-align: center; }
+      .search-box { width: 100%; }
     }
   </style>
 </head>
@@ -294,7 +165,7 @@
 
     <div class="input-section">
       <label for="offender-input">Offender Numbers</label>
-      <textarea id="offender-input" placeholder="Paste offender numbers here, one per line or separated by commas&#10;&#10;Example:&#10;0500001&#10;0000001, 0123456"></textarea>
+      <textarea id="offender-input" placeholder="Paste offender numbers here, one per line or separated by commas&#10;&#10;Example:&#10;0082606&#10;0117599, 0490165"></textarea>
       <p class="hint">Numbers can be separated by commas, spaces, or newlines. Leading zeros are optional.</p>
       <div class="actions">
         <button class="btn-primary" id="lookup-btn" onclick="runLookup()">Look Up</button>
@@ -308,26 +179,31 @@
     </div>
 
     <div class="results-section" id="results-section">
-      <div class="results-header">
-        <h2>Results</h2>
-        <button class="btn-secondary copy-btn" onclick="copyTable()">Copy as TSV</button>
+      <div class="results-toolbar">
+        <h2>Results <span id="result-count" style="font-weight:400; font-size:0.85rem; color:var(--text-muted)"></span></h2>
+        <div class="toolbar-right">
+          <input type="text" class="search-box" id="search-box" placeholder="Filter results..." oninput="filterTable()">
+          <button class="btn-secondary toolbar-btn copy-tsv" onclick="copyTable()">Copy TSV</button>
+          <button class="btn-secondary toolbar-btn dl-cache" onclick="downloadCache()">Download Cache</button>
+        </div>
       </div>
       <div class="table-wrapper">
-        <table>
+        <table id="results-table">
           <thead>
             <tr>
-              <th>Offender #</th>
-              <th>Name</th>
-              <th>Offense</th>
-              <th>County</th>
-              <th>Conviction Date</th>
-              <th>Punishment Type</th>
-              <th>Incarceration</th>
-              <th>Release Date</th>
+              <th data-col="0" onclick="sortTable(0)">Offender # <span class="sort-arrow">&#9650;</span></th>
+              <th data-col="1" onclick="sortTable(1)">Name <span class="sort-arrow">&#9650;</span></th>
+              <th data-col="2" onclick="sortTable(2)">Sentence # <span class="sort-arrow">&#9650;</span></th>
+              <th data-col="3" onclick="sortTable(3)">Offense <span class="sort-arrow">&#9650;</span></th>
+              <th data-col="4" onclick="sortTable(4)">County <span class="sort-arrow">&#9650;</span></th>
+              <th data-col="5" onclick="sortTable(5)">Conviction Date <span class="sort-arrow">&#9650;</span></th>
+              <th data-col="6" onclick="sortTable(6)">Punishment Type <span class="sort-arrow">&#9650;</span></th>
+              <th data-col="7" onclick="sortTable(7)">Sentence Begin <span class="sort-arrow">&#9650;</span></th>
+              <th data-col="8" onclick="sortTable(8)">Actual Release <span class="sort-arrow">&#9650;</span></th>
+              <th data-col="9" onclick="sortTable(9)">Projected Release <span class="sort-arrow">&#9650;</span></th>
             </tr>
           </thead>
-          <tbody id="results-body">
-          </tbody>
+          <tbody id="results-body"></tbody>
         </table>
       </div>
     </div>
@@ -339,12 +215,28 @@
   </div>
 
   <script>
+    const WORKER_URL = 'https://ncdoc-proxy.austin-brian.workers.dev';
+
     const CORS_PROXIES = [
+      url => `${WORKER_URL}?url=${encodeURIComponent(url)}`,
       url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
       url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
     ];
-
     const BASE_URL = 'https://webapps.doc.state.nc.us/opi';
+
+    let cache = {};
+    let cacheLoaded = false;
+    let currentSortCol = -1;
+    let currentSortAsc = true;
+
+    async function loadCache() {
+      if (cacheLoaded) return;
+      try {
+        const resp = await fetch('offenders.json');
+        if (resp.ok) cache = await resp.json();
+      } catch (e) {}
+      cacheLoaded = true;
+    }
 
     function parseOffenderNumbers(text) {
       return text
@@ -358,10 +250,8 @@
       for (const makeProxy of CORS_PROXIES) {
         try {
           const proxyUrl = makeProxy(url);
-          const resp = await fetch(proxyUrl, { signal: AbortSignal.timeout(15000) });
-          if (resp.ok) {
-            return await resp.text();
-          }
+          const resp = await fetch(proxyUrl, { signal: AbortSignal.timeout(30000) });
+          if (resp.ok) return await resp.text();
         } catch (e) {
           continue;
         }
@@ -369,185 +259,154 @@
       throw new Error('All CORS proxies failed');
     }
 
-    function parseOffenderDetail(html, offenderId) {
+    // ── HTML Parsing ──────────────────────────────────────────────
+
+    function parseOffenderPage(html, offenderId) {
       const parser = new DOMParser();
       const doc = parser.parseFromString(html, 'text/html');
-      const text = doc.body?.innerText || doc.body?.textContent || '';
+      const body = doc.body;
+      if (!body) return [{ offenderId, error: 'Empty response' }];
 
-      // Check if offender was found
-      if (text.includes('No records found') || text.includes('no records found')) {
+      const text = body.textContent || '';
+      if (text.includes('No records found') || text.includes('Invalid Offender')) {
         return [{ offenderId, error: 'No records found' }];
       }
 
-      // Extract name
-      const name = extractField(text, 'Offender Name:') ||
-                    extractField(text, 'Name:') ||
-                    extractNameFromTable(doc) ||
-                    'Unknown';
+      const name = extractName(doc);
+      const rows = extractOffenseRows(doc, offenderId, name);
 
-      // Extract sentences from the page
+      if (rows.length === 0) {
+        return [{
+          offenderId, name,
+          sentenceNum: 'N/A', offense: 'N/A', county: 'N/A',
+          convictionDate: 'N/A', punishmentType: 'N/A',
+          sentenceBegin: 'N/A', actualRelease: 'N/A', projectedRelease: 'N/A',
+        }];
+      }
+
+      return rows;
+    }
+
+    function extractName(doc) {
+      // Name is in <font size="+1"> inside a bold tag near the top
+      const fonts = doc.querySelectorAll('font[size="+1"]');
+      for (const f of fonts) {
+        const text = f.textContent.trim();
+        if (text && text.length > 1 && /[A-Z]/.test(text)) {
+          return text;
+        }
+      }
+
+      // Fallback: look for bold text near "Offender Number"
+      const allBolds = doc.querySelectorAll('b');
+      for (let i = 0; i < allBolds.length; i++) {
+        if (allBolds[i].textContent.includes('Offender Number')) {
+          // Name is usually a few elements before, in a larger font
+          for (let j = Math.max(0, i - 5); j < i; j++) {
+            const t = allBolds[j]?.textContent.trim();
+            if (t && t.length > 2 && /^[A-Z\s]+$/.test(t)) {
+              return t;
+            }
+          }
+        }
+      }
+
+      return 'Unknown';
+    }
+
+    function extractOffenseRows(doc, offenderId, name) {
       const rows = [];
-      const sentenceBlocks = extractSentenceBlocks(text);
 
-      if (sentenceBlocks.length === 0) {
-        rows.push({
-          offenderId,
-          name: cleanName(name),
-          offense: 'N/A',
-          county: extractField(text, 'County Of Conviction:') || 'N/A',
-          convictionDate: 'N/A',
-          punishmentType: 'N/A',
-          incarceration: 'No record found',
-          releaseDate: 'N/A',
-        });
-      } else {
-        for (const block of sentenceBlocks) {
+      const sentenceTables = doc.querySelectorAll('table.sentencedisplaytable');
+
+      for (const st of sentenceTables) {
+        const inner = st.querySelector('table.innerdisplaytable');
+        if (!inner) continue;
+
+        const meta = parseMetadataTable(inner);
+        const sentenceNum = meta['Sentence Number'] || 'N/A';
+        const county = meta['County Of Conviction'] || 'N/A';
+        const convictionDate = meta['Conviction Date'] || 'N/A';
+        const punishmentType = meta['Punishment Type'] || 'N/A';
+        const sentenceBegin = meta['Sentence Begin Date'] || 'N/A';
+        const actualRelease = meta['Actual Release Date'] || 'N/A';
+        const projectedRelease = meta['Projected Release Date'] || 'N/A';
+
+        // Get individual offenses from the datainput table
+        const offenseTable = st.querySelector('table.datainput');
+        const offenses = offenseTable ? parseOffenseTable(offenseTable) : [];
+
+        if (offenses.length === 0) {
+          // Sentence with no offense rows — still include it
           rows.push({
-            offenderId,
-            name: cleanName(name),
-            offense: block.offense || 'N/A',
-            county: block.county || 'N/A',
-            convictionDate: block.convictionDate || 'N/A',
-            punishmentType: block.punishmentType || 'N/A',
-            incarceration: block.incarceration || 'No record found',
-            releaseDate: block.releaseDate || 'N/A',
+            offenderId, name, sentenceNum,
+            offense: 'N/A', county, convictionDate,
+            punishmentType, sentenceBegin, actualRelease, projectedRelease,
           });
+        } else {
+          // One row per offense
+          for (const off of offenses) {
+            rows.push({
+              offenderId, name, sentenceNum,
+              offense: off.offense,
+              county, convictionDate, punishmentType,
+              sentenceBegin, actualRelease, projectedRelease,
+            });
+          }
         }
       }
 
       return rows;
     }
 
-    function extractField(text, label) {
-      const idx = text.indexOf(label);
-      if (idx === -1) return null;
-      const after = text.substring(idx + label.length).trim();
-      const line = after.split('\n')[0].trim();
-      return line || null;
-    }
-
-    function extractNameFromTable(doc) {
-      // Try to find the name from the page structure
-      const allText = doc.body?.textContent || '';
-
-      // Look for pattern: Last Name followed by First Name in the committed names table
-      const lastNameMatch = allText.match(/COMMITTED\s*$/m);
-      if (lastNameMatch) {
-        // Try a different approach - look for the name display area
+    function parseMetadataTable(table) {
+      const data = {};
+      const cells = table.querySelectorAll('td');
+      for (let i = 0; i < cells.length; i++) {
+        const bold = cells[i].querySelector('b');
+        if (bold) {
+          const label = bold.textContent.trim().replace(/:$/, '');
+          const valTd = cells[i + 1];
+          if (valTd && !valTd.querySelector('b')) {
+            data[label] = valTd.textContent.trim();
+          }
+        }
       }
-
-      // Try to find it near "Offender Name"
-      const nameMatch = allText.match(/(?:Offender\s+Name|Name)\s*[:\s]\s*([A-Z][A-Z\s,'-]+)/i);
-      if (nameMatch) return nameMatch[1].trim();
-
-      return null;
+      return data;
     }
 
-    function cleanName(name) {
-      if (!name) return 'Unknown';
-      return name.replace(/\s+/g, ' ').trim();
-    }
-
-    function extractSentenceBlocks(text) {
-      const blocks = [];
-
-      // Split text by sentence markers
-      const sentencePattern = /Sentence\s+(?:Number|#)\s*:?\s*(\d+-\d+)/gi;
-      const parts = text.split(sentencePattern);
-
-      if (parts.length <= 1) {
-        // Try alternate parsing: look for key fields directly
-        const county = extractField(text, 'County Of Conviction:') ||
-                        extractField(text, 'County:');
-        const convDate = extractField(text, 'Conviction Date:');
-        const punishment = extractField(text, 'Punishment Type:');
-        const offense = extractOffense(text);
-        const incarceration = extractIncarceration(text);
-        const releaseDate = extractRelease(text);
-
-        if (county || convDate || offense) {
-          blocks.push({
-            county,
-            convictionDate: convDate,
-            punishmentType: punishment,
-            offense,
-            incarceration,
-            releaseDate,
+    function parseOffenseTable(table) {
+      const offenses = [];
+      const tableRows = table.querySelectorAll('tr.tableRowOdd, tr.tableRowEven');
+      for (const row of tableRows) {
+        const cells = row.querySelectorAll('td.tableCell');
+        if (cells.length >= 3) {
+          offenses.push({
+            commitment: cells[0]?.textContent.trim() || '',
+            docket: cells[1]?.textContent.trim() || '',
+            offense: cells[2]?.textContent.trim() || '',
+            offenseDate: cells[3]?.textContent.trim() || '',
+            type: cells[4]?.textContent.trim() || '',
+            penaltyClass: cells[5]?.textContent.trim() || '',
           });
         }
-        return blocks;
       }
-
-      // Process each sentence block
-      for (let i = 1; i < parts.length; i += 2) {
-        const blockText = parts[i + 1] || '';
-        blocks.push({
-          county: extractField(blockText, 'County Of Conviction:') ||
-                  extractField(blockText, 'County:'),
-          convictionDate: extractField(blockText, 'Conviction Date:'),
-          punishmentType: extractField(blockText, 'Punishment Type:'),
-          offense: extractOffense(blockText),
-          incarceration: extractIncarceration(blockText),
-          releaseDate: extractRelease(blockText),
-        });
-      }
-
-      return blocks;
+      return offenses;
     }
 
-    function extractOffense(text) {
-      // Look for offense description
-      const patterns = [
-        /Offense\s*[:\s]\s*([A-Z][A-Z\s()\/,\-.$0-9]+)/,
-        /OFFENSE\s*[:\s]\s*([A-Z][A-Z\s()\/,\-.$0-9]+)/,
-      ];
-      for (const p of patterns) {
-        const m = text.match(p);
-        if (m) {
-          let offense = m[1].trim();
-          // Trim trailing labels
-          offense = offense.replace(/\s*(Offense Date|Type|Docket|Class|Penalty).*$/i, '').trim();
-          if (offense.length > 0) return offense;
-        }
-      }
-      return null;
-    }
-
-    function extractIncarceration(text) {
-      if (text.includes('No Incarceration Record Found') || text.includes('no incarceration')) {
-        return 'None';
-      }
-
-      // Look for actual incarceration dates
-      const admitMatch = text.match(/(?:Admission|Admit|Received)\s*(?:Date)?\s*:?\s*(\d{2}\/\d{2}\/\d{4})/i);
-      const releaseMatch = text.match(/(?:Release|Released|Discharge)\s*(?:Date)?\s*:?\s*(\d{2}\/\d{2}\/\d{4})/i);
-
-      if (admitMatch && releaseMatch) {
-        return `${admitMatch[1]} - ${releaseMatch[1]}`;
-      } else if (admitMatch) {
-        return `Admitted ${admitMatch[1]}`;
-      }
-
-      return 'None';
-    }
-
-    function extractRelease(text) {
-      const patterns = [
-        /(?:Actual\s+)?Release\s*Date\s*:?\s*(\d{2}\/\d{2}\/\d{4})/i,
-        /(?:Projected|Expected)\s+Release\s*(?:Date)?\s*:?\s*(\d{2}\/\d{2}\/\d{4})/i,
-        /Released?\s*:?\s*(\d{2}\/\d{2}\/\d{4})/i,
-      ];
-      for (const p of patterns) {
-        const m = text.match(p);
-        if (m) return m[1];
-      }
-      return null;
-    }
+    // ── Lookup & Cache ────────────────────────────────────────────
 
     async function lookupOffender(offenderId) {
+      if (cache[offenderId]) {
+        return cache[offenderId].map(r => ({ ...r, _cached: true }));
+      }
+
       const url = `${BASE_URL}/viewoffender.do?method=view&offenderID=${offenderId}&searchOffenderId=${offenderId}`;
       const html = await fetchWithProxy(url);
-      return parseOffenderDetail(html, offenderId);
+      const rows = parseOffenderPage(html, offenderId);
+
+      cache[offenderId] = rows.map(({ _cached, ...rest }) => rest);
+      return rows;
     }
 
     async function runLookup() {
@@ -556,6 +415,8 @@
 
       const numbers = [...new Set(parseOffenderNumbers(input))];
       if (numbers.length === 0) return;
+
+      await loadCache();
 
       const lookupBtn = document.getElementById('lookup-btn');
       const statusText = document.getElementById('status-text');
@@ -572,14 +433,18 @@
       errorsSection.classList.remove('active');
       progressBar.classList.add('active');
       resultsSection.classList.add('active');
+      document.getElementById('search-box').value = '';
 
       const allRows = [];
       const errors = [];
 
       for (let i = 0; i < numbers.length; i++) {
         const num = numbers[i];
-        statusText.textContent = `Looking up ${num} (${i + 1}/${numbers.length})...`;
-        progressFill.style.width = `${((i) / numbers.length) * 100}%`;
+        const isCached = !!cache[num];
+        statusText.textContent = isCached
+          ? `Loading ${num} from cache (${i + 1}/${numbers.length})...`
+          : `Looking up ${num} (${i + 1}/${numbers.length})...`;
+        progressFill.style.width = `${(i / numbers.length) * 100}%`;
 
         try {
           const rows = await lookupOffender(num);
@@ -589,37 +454,14 @@
           allRows.push({ offenderId: num, error: `Lookup failed: ${e.message}` });
         }
 
-        // Small delay between requests to be respectful
-        if (i < numbers.length - 1) {
+        if (!isCached && i < numbers.length - 1) {
           await new Promise(r => setTimeout(r, 500));
         }
       }
 
-      // Render results
-      for (const row of allRows) {
-        const tr = document.createElement('tr');
-        if (row.error) {
-          tr.className = 'error-row';
-          tr.innerHTML = `
-            <td>${row.offenderId}</td>
-            <td colspan="7">${escapeHtml(row.error)}</td>
-          `;
-        } else {
-          tr.innerHTML = `
-            <td>${row.offenderId}</td>
-            <td>${escapeHtml(row.name)}</td>
-            <td>${escapeHtml(row.offense)}</td>
-            <td>${escapeHtml(row.county)}</td>
-            <td>${escapeHtml(row.convictionDate)}</td>
-            <td>${escapeHtml(row.punishmentType)}</td>
-            <td>${escapeHtml(row.incarceration)}</td>
-            <td>${escapeHtml(row.releaseDate)}</td>
-          `;
-        }
-        resultsBody.appendChild(tr);
-      }
+      renderResults(allRows, resultsBody);
+      updateResultCount();
 
-      // Show errors if any
       if (errors.length > 0) {
         errorsSection.classList.add('active');
         for (const err of errors) {
@@ -630,18 +472,123 @@
       }
 
       progressFill.style.width = '100%';
-      statusText.textContent = `Done. ${allRows.length} record(s) found for ${numbers.length} offender(s).`;
+      const cachedCount = allRows.filter(r => r._cached).length;
+      statusText.textContent = `Done. ${allRows.length} record(s) for ${numbers.length} offender(s).`
+        + (cachedCount > 0 ? ` (${cachedCount} from cache)` : '');
       lookupBtn.disabled = false;
 
-      setTimeout(() => {
-        progressBar.classList.remove('active');
-      }, 1000);
+      setTimeout(() => progressBar.classList.remove('active'), 1000);
     }
 
-    function escapeHtml(str) {
-      const div = document.createElement('div');
-      div.textContent = str;
-      return div.innerHTML;
+    function renderResults(allRows, tbody) {
+      for (const row of allRows) {
+        const tr = document.createElement('tr');
+        if (row.error) {
+          tr.className = 'error-row';
+          tr.innerHTML = `<td>${esc(row.offenderId)}</td><td colspan="9">${esc(row.error)}</td>`;
+        } else {
+          tr.innerHTML = `
+            <td>${esc(row.offenderId)}${row._cached ? '<span class="cached-badge">cached</span>' : ''}</td>
+            <td>${esc(row.name)}</td>
+            <td>${esc(row.sentenceNum)}</td>
+            <td>${esc(row.offense)}</td>
+            <td>${esc(row.county)}</td>
+            <td>${esc(row.convictionDate)}</td>
+            <td>${esc(row.punishmentType)}</td>
+            <td>${esc(row.sentenceBegin)}</td>
+            <td>${esc(row.actualRelease)}</td>
+            <td>${esc(row.projectedRelease)}</td>
+          `;
+        }
+        tbody.appendChild(tr);
+      }
+    }
+
+    // ── Search ────────────────────────────────────────────────────
+
+    function filterTable() {
+      const query = document.getElementById('search-box').value.toLowerCase();
+      const rows = document.querySelectorAll('#results-body tr');
+      for (const row of rows) {
+        const text = row.textContent.toLowerCase();
+        row.classList.toggle('hidden-row', query && !text.includes(query));
+      }
+      updateResultCount();
+    }
+
+    function updateResultCount() {
+      const all = document.querySelectorAll('#results-body tr');
+      const visible = document.querySelectorAll('#results-body tr:not(.hidden-row)');
+      const span = document.getElementById('result-count');
+      if (all.length === visible.length) {
+        span.textContent = `(${all.length} rows)`;
+      } else {
+        span.textContent = `(${visible.length} of ${all.length} rows)`;
+      }
+    }
+
+    // ── Sort ──────────────────────────────────────────────────────
+
+    function sortTable(colIdx) {
+      const tbody = document.getElementById('results-body');
+      const rows = Array.from(tbody.querySelectorAll('tr'));
+
+      if (currentSortCol === colIdx) {
+        currentSortAsc = !currentSortAsc;
+      } else {
+        currentSortCol = colIdx;
+        currentSortAsc = true;
+      }
+
+      // Update header styling
+      document.querySelectorAll('#results-table th').forEach(th => {
+        th.classList.remove('sorted');
+        th.querySelector('.sort-arrow').innerHTML = '&#9650;';
+      });
+      const activeHeader = document.querySelector(`#results-table th[data-col="${colIdx}"]`);
+      activeHeader.classList.add('sorted');
+      activeHeader.querySelector('.sort-arrow').innerHTML = currentSortAsc ? '&#9650;' : '&#9660;';
+
+      rows.sort((a, b) => {
+        const cellsA = a.querySelectorAll('td');
+        const cellsB = b.querySelectorAll('td');
+        if (!cellsA[colIdx] || !cellsB[colIdx]) return 0;
+
+        let valA = cellsA[colIdx].textContent.trim();
+        let valB = cellsB[colIdx].textContent.trim();
+
+        // Try date sort (MM/DD/YYYY)
+        const dateA = parseDate(valA);
+        const dateB = parseDate(valB);
+        if (dateA && dateB) {
+          return currentSortAsc ? dateA - dateB : dateB - dateA;
+        }
+
+        // Text sort
+        valA = valA.toLowerCase();
+        valB = valB.toLowerCase();
+        if (valA < valB) return currentSortAsc ? -1 : 1;
+        if (valA > valB) return currentSortAsc ? 1 : -1;
+        return 0;
+      });
+
+      for (const row of rows) {
+        tbody.appendChild(row);
+      }
+    }
+
+    function parseDate(str) {
+      const m = str.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+      if (!m) return null;
+      return new Date(+m[3], +m[1] - 1, +m[2]).getTime();
+    }
+
+    // ── Utilities ─────────────────────────────────────────────────
+
+    function esc(str) {
+      const d = document.createElement('div');
+      d.textContent = str || '';
+      return d.innerHTML;
     }
 
     function clearAll() {
@@ -655,22 +602,35 @@
     }
 
     function copyTable() {
-      const rows = document.querySelectorAll('#results-body tr');
-      const headers = ['Offender #', 'Name', 'Offense', 'County', 'Conviction Date', 'Punishment Type', 'Incarceration', 'Release Date'];
+      const rows = document.querySelectorAll('#results-body tr:not(.hidden-row)');
+      const headers = ['Offender #','Name','Sentence #','Offense','County',
+        'Conviction Date','Punishment Type','Sentence Begin','Actual Release','Projected Release'];
       let tsv = headers.join('\t') + '\n';
-
       for (const row of rows) {
         const cells = row.querySelectorAll('td');
-        const values = Array.from(cells).map(c => c.textContent.trim());
-        tsv += values.join('\t') + '\n';
+        tsv += Array.from(cells).map(c => c.textContent.trim()).join('\t') + '\n';
       }
+      navigator.clipboard.writeText(tsv).then(() => flashButton('.copy-tsv', 'Copied!'));
+    }
 
-      navigator.clipboard.writeText(tsv).then(() => {
-        const btn = document.querySelector('.copy-btn');
-        const original = btn.textContent;
-        btn.textContent = 'Copied!';
-        setTimeout(() => { btn.textContent = original; }, 1500);
-      });
+    function downloadCache() {
+      const json = JSON.stringify(cache, null, 2);
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'offenders.json';
+      a.click();
+      URL.revokeObjectURL(url);
+      flashButton('.dl-cache', 'Downloaded!');
+    }
+
+    function flashButton(selector, msg) {
+      const btn = document.querySelector(selector);
+      if (!btn) return;
+      const original = btn.textContent;
+      btn.textContent = msg;
+      setTimeout(() => { btn.textContent = original; }, 1500);
     }
   </script>
 </body>
