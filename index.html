@@ -140,6 +140,39 @@
     .report-link:hover { color: var(--accent); text-decoration: underline; }
     .hidden-row { display: none; }
 
+    .page-header {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      margin-bottom: 0.25rem;
+    }
+
+    .modal-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+      z-index: 1000; align-items: center; justify-content: center;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal {
+      background: var(--bg-secondary); border-radius: 8px; padding: 1.5rem;
+      width: 90%; max-width: 500px; box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+    }
+    .modal h2 { font-size: 1.1rem; margin-bottom: 1rem; }
+    .modal label { margin-bottom: 0.25rem; }
+    .modal textarea, .modal input[type="text"] {
+      width: 100%; padding: 0.5rem 0.75rem; border: 1px solid var(--border);
+      border-radius: 4px; font-size: 0.85rem; font-family: inherit;
+      margin-bottom: 0.75rem;
+    }
+    .modal textarea { min-height: 100px; resize: vertical; font-family: inherit; }
+    .modal textarea:focus, .modal input[type="text"]:focus {
+      outline: none; border-color: var(--accent);
+    }
+    .modal-actions { display: flex; gap: 0.5rem; justify-content: flex-end; }
+    .modal-status {
+      font-size: 0.8rem; margin-top: 0.75rem;
+      font-family: Georgia, 'Times New Roman', serif;
+    }
+    .modal-status.success { color: #16a34a; }
+    .modal-status.error { color: var(--accent); }
+
     .errors-section {
       margin-top: 1rem; padding: 1rem; background: #fff5f5;
       border: 1px solid #fecaca; border-radius: 8px; display: none;
@@ -160,8 +193,26 @@
 </head>
 <body>
   <div class="container">
-    <h1>NC DOC Offender Lookup</h1>
+    <div class="page-header">
+      <h1>NC DOC Offender Lookup</h1>
+      <a class="report-link" href="#" onclick="openReportModal(); return false;">Report a bug</a>
+    </div>
     <p class="subtitle">Look up offender records from the NC Department of Adult Correction public database.</p>
+
+    <div class="modal-overlay" id="report-modal" onclick="if(event.target===this)closeReportModal()">
+      <div class="modal">
+        <h2>Report a Bug</h2>
+        <label for="report-name">Your name (optional)</label>
+        <input type="text" id="report-name" placeholder="Name or email">
+        <label for="report-desc">What went wrong?</label>
+        <textarea id="report-desc" placeholder="Describe the issue..."></textarea>
+        <div class="modal-actions">
+          <button class="btn-secondary" onclick="closeReportModal()">Cancel</button>
+          <button class="btn-primary" id="report-submit-btn" onclick="submitReport()">Submit</button>
+        </div>
+        <div class="modal-status" id="report-status"></div>
+      </div>
+    </div>
 
     <div class="input-section">
       <label for="offender-input">Offender Numbers</label>
@@ -213,9 +264,6 @@
       <ul id="errors-list"></ul>
     </div>
 
-    <p style="margin-top: 2rem; text-align: center;">
-      <a class="report-link" href="#" onclick="reportIssue(); return false;">Report a bug or issue</a>
-    </p>
   </div>
 
   <script>
@@ -629,22 +677,68 @@
       flashButton('.dl-cache', 'Downloaded!');
     }
 
-    function reportIssue() {
+    function openReportModal() {
+      document.getElementById('report-modal').classList.add('active');
+      document.getElementById('report-desc').focus();
+      document.getElementById('report-status').textContent = '';
+    }
+
+    function closeReportModal() {
+      document.getElementById('report-modal').classList.remove('active');
+      document.getElementById('report-name').value = '';
+      document.getElementById('report-desc').value = '';
+      document.getElementById('report-status').textContent = '';
+    }
+
+    async function submitReport() {
+      const desc = document.getElementById('report-desc').value.trim();
+      if (!desc) {
+        const status = document.getElementById('report-status');
+        status.textContent = 'Please describe the issue.';
+        status.className = 'modal-status error';
+        return;
+      }
+
+      const submitBtn = document.getElementById('report-submit-btn');
+      const status = document.getElementById('report-status');
+      submitBtn.disabled = true;
+      status.textContent = 'Submitting...';
+      status.className = 'modal-status';
+
+      const name = document.getElementById('report-name').value.trim();
       const input = document.getElementById('offender-input').value.trim();
       const errorsEl = document.getElementById('errors-list');
       const errors = errorsEl ? errorsEl.textContent.trim() : '';
 
-      let body = '## What happened?\n\n\n\n';
-      if (input) {
-        body += `## Offender numbers searched\n\`\`\`\n${input}\n\`\`\`\n\n`;
-      }
-      if (errors) {
-        body += `## Errors shown\n\`\`\`\n${errors}\n\`\`\`\n\n`;
-      }
-      body += `## Browser\n${navigator.userAgent}\n`;
+      const fullDesc = name ? `${desc}\n\n_Reported by: ${name}_` : desc;
 
-      const url = `https://github.com/austinbrian/ncdoc-number-search/issues/new?title=${encodeURIComponent('Bug report')}&body=${encodeURIComponent(body)}`;
-      window.open(url, '_blank');
+      try {
+        const resp = await fetch(`${WORKER_URL}/report`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            description: fullDesc,
+            offenderNumbers: input || null,
+            errors: errors || null,
+            browser: navigator.userAgent,
+          }),
+        });
+
+        const result = await resp.json();
+        if (result.success) {
+          status.textContent = 'Thank you! Your report has been submitted.';
+          status.className = 'modal-status success';
+          setTimeout(closeReportModal, 2000);
+        } else {
+          status.textContent = result.error || 'Something went wrong. Please try again.';
+          status.className = 'modal-status error';
+        }
+      } catch (e) {
+        status.textContent = 'Failed to submit. Please try again later.';
+        status.className = 'modal-status error';
+      }
+
+      submitBtn.disabled = false;
     }
 
     function flashButton(selector, msg) {

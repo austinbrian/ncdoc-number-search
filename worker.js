@@ -1,25 +1,28 @@
-// Cloudflare Worker — CORS proxy for NC DOC lookups
-// Deploy: npx wrangler deploy worker.js --name ncdoc-proxy
-// Or paste into Cloudflare Dashboard > Workers & Pages > Create > Quick Edit
+// Cloudflare Worker — CORS proxy for NC DOC lookups + bug report endpoint
+// Deploy: npx wrangler deploy worker.js --name ncdoc-proxy --compatibility-date 2026-03-11
+// Set the GitHub token: npx wrangler secret put GITHUB_TOKEN
 
-const ALLOWED_ORIGIN = '*'; // Lock down to your GitHub Pages URL if desired
+const ALLOWED_ORIGIN = '*';
 const TARGET_HOST = 'https://webapps.doc.state.nc.us';
+const GITHUB_REPO = 'austinbrian/ncdoc-number-search';
 
 export default {
-  async fetch(request) {
-    // Handle CORS preflight
+  async fetch(request, env) {
     if (request.method === 'OPTIONS') {
       return new Response(null, { status: 204, headers: corsHeaders() });
     }
 
     const url = new URL(request.url);
-    const target = url.searchParams.get('url');
 
+    // Bug report endpoint
+    if (url.pathname === '/report' && request.method === 'POST') {
+      return handleBugReport(request, env);
+    }
+
+    // CORS proxy for NC DOC
+    const target = url.searchParams.get('url');
     if (!target || !target.startsWith(TARGET_HOST)) {
-      return new Response(JSON.stringify({ error: 'Invalid or missing ?url= parameter' }), {
-        status: 400,
-        headers: { ...corsHeaders(), 'Content-Type': 'application/json' },
-      });
+      return jsonResponse({ error: 'Invalid or missing ?url= parameter' }, 400);
     }
 
     try {
@@ -27,7 +30,6 @@ export default {
         headers: { 'User-Agent': 'Mozilla/5.0 (compatible; NCDOC-Lookup/1.0)' },
       });
       const body = await resp.text();
-
       return new Response(body, {
         status: resp.status,
         headers: {
@@ -36,18 +38,77 @@ export default {
         },
       });
     } catch (e) {
-      return new Response(JSON.stringify({ error: e.message }), {
-        status: 502,
-        headers: { ...corsHeaders(), 'Content-Type': 'application/json' },
-      });
+      return jsonResponse({ error: e.message }, 502);
     }
   },
 };
 
+async function handleBugReport(request, env) {
+  const token = env.GITHUB_TOKEN;
+  if (!token) {
+    return jsonResponse({ error: 'Bug reporting is not configured' }, 500);
+  }
+
+  let data;
+  try {
+    data = await request.json();
+  } catch {
+    return jsonResponse({ error: 'Invalid JSON' }, 400);
+  }
+
+  const { description, offenderNumbers, errors, browser } = data;
+  if (!description || !description.trim()) {
+    return jsonResponse({ error: 'Description is required' }, 400);
+  }
+
+  let body = `## Description\n${description.trim()}\n\n`;
+  if (offenderNumbers) {
+    body += `## Offender numbers searched\n\`\`\`\n${offenderNumbers}\n\`\`\`\n\n`;
+  }
+  if (errors) {
+    body += `## Errors shown\n\`\`\`\n${errors}\n\`\`\`\n\n`;
+  }
+  body += `## Browser\n${browser || 'Unknown'}\n\n---\n*Submitted via bug report form*`;
+
+  try {
+    const ghResp = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/issues`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `token ${token}`,
+        'Content-Type': 'application/json',
+        'User-Agent': 'NCDOC-Lookup-Worker',
+        'Accept': 'application/vnd.github.v3+json',
+      },
+      body: JSON.stringify({
+        title: `Bug report: ${description.trim().substring(0, 80)}`,
+        body,
+        labels: ['bug'],
+      }),
+    });
+
+    if (!ghResp.ok) {
+      const err = await ghResp.text();
+      return jsonResponse({ error: `GitHub API error: ${ghResp.status}` }, 502);
+    }
+
+    const issue = await ghResp.json();
+    return jsonResponse({ success: true, issueNumber: issue.number, url: issue.html_url });
+  } catch (e) {
+    return jsonResponse({ error: e.message }, 502);
+  }
+}
+
+function jsonResponse(data, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { ...corsHeaders(), 'Content-Type': 'application/json' },
+  });
+}
+
 function corsHeaders() {
   return {
     'Access-Control-Allow-Origin': ALLOWED_ORIGIN,
-    'Access-Control-Allow-Methods': 'GET, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
   };
 }
