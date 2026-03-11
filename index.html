@@ -133,11 +133,11 @@
     tr:last-child td { border-bottom: none; }
     tr:hover td { background: #fafafa; }
     .error-row td { color: var(--accent); font-style: italic; }
-    .cached-badge {
-      display: inline-block; font-size: 0.55rem; background: #e0f2fe;
-      color: #0369a1; padding: 0.05rem 0.25rem; border-radius: 3px;
-      margin-left: 0.2rem; font-family: sans-serif; vertical-align: middle;
+    .report-link {
+      font-size: 0.8rem; color: var(--text-muted); text-decoration: none;
+      font-family: Georgia, 'Times New Roman', serif;
     }
+    .report-link:hover { color: var(--accent); text-decoration: underline; }
     .hidden-row { display: none; }
 
     .errors-section {
@@ -212,6 +212,10 @@
       <h3>Lookup Errors</h3>
       <ul id="errors-list"></ul>
     </div>
+
+    <p style="margin-top: 2rem; text-align: center;">
+      <a class="report-link" href="#" onclick="reportIssue(); return false;">Report a bug or issue</a>
+    </p>
   </div>
 
   <script>
@@ -488,7 +492,7 @@
           tr.innerHTML = `<td>${esc(row.offenderId)}</td><td colspan="9">${esc(row.error)}</td>`;
         } else {
           tr.innerHTML = `
-            <td>${esc(row.offenderId)}${row._cached ? '<span class="cached-badge">cached</span>' : ''}</td>
+            <td>${esc(row.offenderId)}</td>
             <td>${esc(row.name)}</td>
             <td>${esc(row.sentenceNum)}</td>
             <td>${esc(row.offense)}</td>
@@ -623,6 +627,24 @@
       a.click();
       URL.revokeObjectURL(url);
       flashButton('.dl-cache', 'Downloaded!');
+    }
+
+    function reportIssue() {
+      const input = document.getElementById('offender-input').value.trim();
+      const errorsEl = document.getElementById('errors-list');
+      const errors = errorsEl ? errorsEl.textContent.trim() : '';
+
+      let body = '## What happened?\n\n\n\n';
+      if (input) {
+        body += `## Offender numbers searched\n\`\`\`\n${input}\n\`\`\`\n\n`;
+      }
+      if (errors) {
+        body += `## Errors shown\n\`\`\`\n${errors}\n\`\`\`\n\n`;
+      }
+      body += `## Browser\n${navigator.userAgent}\n`;
+
+      const url = `https://github.com/austinbrian/ncdoc-number-search/issues/new?title=${encodeURIComponent('Bug report')}&body=${encodeURIComponent(body)}`;
+      window.open(url, '_blank');
     }
 
     function flashButton(selector, msg) {
