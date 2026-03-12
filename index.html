@@ -133,6 +133,25 @@
     tr:last-child td { border-bottom: none; }
     tr:hover td { background: #fafafa; }
     .error-row td { color: var(--accent); font-style: italic; }
+    .id-cell { position: relative; }
+    .id-link {
+      color: inherit; text-decoration: none; display: inline;
+    }
+    .id-view-btn {
+      display: none; font-size: 0.6rem; background: var(--bg-primary);
+      border: 1px solid var(--border); border-radius: 3px; padding: 0.1rem 0.35rem;
+      color: var(--text-secondary); cursor: pointer; margin-left: 0.35rem;
+      text-decoration: none; vertical-align: middle; white-space: nowrap;
+    }
+    .id-view-btn:hover { background: var(--border); color: var(--text-primary); }
+    tr:hover .id-view-btn { display: inline; }
+
+    .pagination {
+      display: flex; justify-content: center; align-items: center;
+      gap: 0.5rem; margin-top: 1rem; font-size: 0.85rem;
+    }
+    .pagination button { padding: 0.35rem 0.75rem; font-size: 0.8rem; }
+    .pagination span { color: var(--text-secondary); font-family: Georgia, 'Times New Roman', serif; }
     .report-link {
       font-size: 0.8rem; color: var(--text-muted); text-decoration: none;
       font-family: Georgia, 'Times New Roman', serif;
@@ -257,6 +276,11 @@
           <tbody id="results-body"></tbody>
         </table>
       </div>
+      <div class="pagination" id="pagination">
+        <button class="btn-secondary" onclick="goToPage(currentPage - 1)">Prev</button>
+        <span id="page-info"></span>
+        <button class="btn-secondary" onclick="goToPage(currentPage + 1)">Next</button>
+      </div>
     </div>
 
     <div class="errors-section" id="errors-section">
@@ -276,10 +300,15 @@
     ];
     const BASE_URL = 'https://webapps.doc.state.nc.us/opi';
 
+    const DOC_BASE = 'https://webapps.doc.state.nc.us/opi/viewoffender.do?method=view';
+    const PAGE_SIZE = 100;
+
     let cache = {};
     let cacheLoaded = false;
     let currentSortCol = -1;
     let currentSortAsc = true;
+    let allResultRows = [];
+    let currentPage = 1;
 
     async function loadCache() {
       if (cacheLoaded) return;
@@ -511,7 +540,9 @@
         }
       }
 
-      renderResults(allRows, resultsBody);
+      allResultRows = allRows;
+      currentPage = 1;
+      renderCurrentPage();
       updateResultCount();
 
       if (errors.length > 0) {
@@ -532,15 +563,33 @@
       setTimeout(() => progressBar.classList.remove('active'), 1000);
     }
 
-    function renderResults(allRows, tbody) {
-      for (const row of allRows) {
+    function getFilteredRows() {
+      const query = document.getElementById('search-box').value.toLowerCase();
+      if (!query) return allResultRows;
+      return allResultRows.filter(row => {
+        const text = Object.values(row).join(' ').toLowerCase();
+        return text.includes(query);
+      });
+    }
+
+    function renderCurrentPage() {
+      const tbody = document.getElementById('results-body');
+      tbody.innerHTML = '';
+      const filtered = getFilteredRows();
+      const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+      if (currentPage > totalPages) currentPage = totalPages;
+      const start = (currentPage - 1) * PAGE_SIZE;
+      const pageRows = filtered.slice(start, start + PAGE_SIZE);
+
+      for (const row of pageRows) {
         const tr = document.createElement('tr');
         if (row.error) {
           tr.className = 'error-row';
           tr.innerHTML = `<td>${esc(row.offenderId)}</td><td colspan="9">${esc(row.error)}</td>`;
         } else {
+          const docUrl = `${DOC_BASE}&offenderID=${row.offenderId}&searchOffenderId=${row.offenderId}`;
           tr.innerHTML = `
-            <td>${esc(row.offenderId)}</td>
+            <td class="id-cell">${esc(row.offenderId)}<a class="id-view-btn" href="${docUrl}" target="_blank" rel="noopener">View</a></td>
             <td>${esc(row.name)}</td>
             <td>${esc(row.sentenceNum)}</td>
             <td>${esc(row.offense)}</td>
@@ -554,37 +603,58 @@
         }
         tbody.appendChild(tr);
       }
+
+      updatePagination(filtered.length, totalPages);
+    }
+
+    function updatePagination(total, totalPages) {
+      const info = document.getElementById('page-info');
+      const pagination = document.getElementById('pagination');
+      if (total <= PAGE_SIZE) {
+        pagination.style.display = 'none';
+      } else {
+        pagination.style.display = 'flex';
+        info.textContent = `Page ${currentPage} of ${totalPages}`;
+        const buttons = pagination.querySelectorAll('button');
+        buttons[0].disabled = currentPage <= 1;
+        buttons[1].disabled = currentPage >= totalPages;
+      }
+    }
+
+    function goToPage(page) {
+      const filtered = getFilteredRows();
+      const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+      if (page < 1 || page > totalPages) return;
+      currentPage = page;
+      renderCurrentPage();
+      updateResultCount();
+      document.querySelector('.table-wrapper').scrollTo(0, 0);
     }
 
     // ── Search ────────────────────────────────────────────────────
 
     function filterTable() {
-      const query = document.getElementById('search-box').value.toLowerCase();
-      const rows = document.querySelectorAll('#results-body tr');
-      for (const row of rows) {
-        const text = row.textContent.toLowerCase();
-        row.classList.toggle('hidden-row', query && !text.includes(query));
-      }
+      currentPage = 1;
+      renderCurrentPage();
       updateResultCount();
     }
 
     function updateResultCount() {
-      const all = document.querySelectorAll('#results-body tr');
-      const visible = document.querySelectorAll('#results-body tr:not(.hidden-row)');
+      const filtered = getFilteredRows();
       const span = document.getElementById('result-count');
-      if (all.length === visible.length) {
-        span.textContent = `(${all.length} rows)`;
+      if (filtered.length === allResultRows.length) {
+        span.textContent = `(${allResultRows.length} rows)`;
       } else {
-        span.textContent = `(${visible.length} of ${all.length} rows)`;
+        span.textContent = `(${filtered.length} of ${allResultRows.length} rows)`;
       }
     }
 
     // ── Sort ──────────────────────────────────────────────────────
 
-    function sortTable(colIdx) {
-      const tbody = document.getElementById('results-body');
-      const rows = Array.from(tbody.querySelectorAll('tr'));
+    const COL_KEYS = ['offenderId','name','sentenceNum','offense','county',
+      'convictionDate','punishmentType','sentenceBegin','actualRelease','projectedRelease'];
 
+    function sortTable(colIdx) {
       if (currentSortCol === colIdx) {
         currentSortAsc = !currentSortAsc;
       } else {
@@ -592,7 +662,6 @@
         currentSortAsc = true;
       }
 
-      // Update header styling
       document.querySelectorAll('#results-table th').forEach(th => {
         th.classList.remove('sorted');
         th.querySelector('.sort-arrow').innerHTML = '&#9650;';
@@ -601,32 +670,23 @@
       activeHeader.classList.add('sorted');
       activeHeader.querySelector('.sort-arrow').innerHTML = currentSortAsc ? '&#9650;' : '&#9660;';
 
-      rows.sort((a, b) => {
-        const cellsA = a.querySelectorAll('td');
-        const cellsB = b.querySelectorAll('td');
-        if (!cellsA[colIdx] || !cellsB[colIdx]) return 0;
+      const key = COL_KEYS[colIdx];
+      allResultRows.sort((a, b) => {
+        const valA = (a[key] || '').trim();
+        const valB = (b[key] || '').trim();
 
-        let valA = cellsA[colIdx].textContent.trim();
-        let valB = cellsB[colIdx].textContent.trim();
-
-        // Try date sort (MM/DD/YYYY)
         const dateA = parseDate(valA);
         const dateB = parseDate(valB);
         if (dateA && dateB) {
           return currentSortAsc ? dateA - dateB : dateB - dateA;
         }
 
-        // Text sort
-        valA = valA.toLowerCase();
-        valB = valB.toLowerCase();
-        if (valA < valB) return currentSortAsc ? -1 : 1;
-        if (valA > valB) return currentSortAsc ? 1 : -1;
-        return 0;
+        const cmp = valA.toLowerCase().localeCompare(valB.toLowerCase());
+        return currentSortAsc ? cmp : -cmp;
       });
 
-      for (const row of rows) {
-        tbody.appendChild(row);
-      }
+      currentPage = 1;
+      renderCurrentPage();
     }
 
     function parseDate(str) {
@@ -651,16 +711,21 @@
       document.getElementById('errors-list').innerHTML = '';
       document.getElementById('status-text').textContent = '';
       document.getElementById('progress-bar').classList.remove('active');
+      allResultRows = [];
+      currentPage = 1;
     }
 
     function copyTable() {
-      const rows = document.querySelectorAll('#results-body tr:not(.hidden-row)');
+      const filtered = getFilteredRows();
       const headers = ['Offender #','Name','Sentence #','Offense','County',
         'Conviction Date','Punishment Type','Sentence Begin','Actual Release','Projected Release'];
       let tsv = headers.join('\t') + '\n';
-      for (const row of rows) {
-        const cells = row.querySelectorAll('td');
-        tsv += Array.from(cells).map(c => c.textContent.trim()).join('\t') + '\n';
+      for (const row of filtered) {
+        if (row.error) {
+          tsv += `${row.offenderId}\t${row.error}\n`;
+        } else {
+          tsv += COL_KEYS.map(k => row[k] || '').join('\t') + '\n';
+        }
       }
       navigator.clipboard.writeText(tsv).then(() => flashButton('.copy-tsv', 'Copied!'));
     }
