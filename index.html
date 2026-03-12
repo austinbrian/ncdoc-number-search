@@ -908,10 +908,7 @@
       statusEl.textContent = 'Loading dataset...';
 
       try {
-        const [datasetResp, reentryResp] = await Promise.all([
-          fetch('data/dataset.json'),
-          fetch('data/early_reentries.json'),
-        ]);
+        const datasetResp = await fetch('data/dataset.json');
 
         if (!datasetResp.ok) {
           statusEl.textContent = 'Dataset not yet available. Run the GitHub Action to fetch offender records.';
@@ -920,17 +917,14 @@
 
         const dataset = await datasetResp.json();
 
-        if (reentryResp.ok) {
-          earlyReentries = await reentryResp.json();
-        }
-
-        // Flatten dataset into rows and merge early reentry dates
+        // Flatten dataset into rows — early reentry dates are already
+        // baked in by the cleanup script (nulled where actual release
+        // predates the early reentry date)
         datasetRows = [];
         for (const [id, rows] of Object.entries(dataset)) {
-          const reentryDate = earlyReentries[id] || '';
           for (const row of rows) {
             if (!row.error) {
-              datasetRows.push({ ...row, earlyReentryDate: reentryDate });
+              datasetRows.push({ ...row, earlyReentryDate: row.earlyReentryDate || '' });
             }
           }
         }
