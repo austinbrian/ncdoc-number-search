@@ -325,6 +325,7 @@
           <div class="toolbar-right">
             <input type="text" class="search-box" id="dataset-search-box" placeholder="Filter results..." oninput="filterDatasetTable()">
             <button class="btn-secondary toolbar-btn" onclick="copyDatasetTable()">Copy TSV</button>
+            <button class="btn-secondary toolbar-btn" onclick="downloadDatasetCSV()">Download CSV</button>
           </div>
         </div>
         <div class="table-wrapper">
@@ -1052,6 +1053,29 @@
 
       datasetCurrentPage = 1;
       renderDatasetPage();
+    }
+
+    function downloadDatasetCSV() {
+      const filtered = getFilteredDatasetRows();
+      const headers = ['Offender #','Name','Sentence #','Offense','County',
+        'Conviction Date','Punishment Type','Sentence Begin','Actual Release',
+        'Projected Release','Early Reentry Date'];
+      const csvEscape = v => {
+        const s = (v || '').toString();
+        return (s.includes(',') || s.includes('"') || s.includes('\n'))
+          ? '"' + s.replace(/"/g, '""') + '"' : s;
+      };
+      let csv = headers.map(csvEscape).join(',') + '\n';
+      for (const row of filtered) {
+        csv += DATASET_COL_KEYS.map(k => csvEscape(row[k])).join(',') + '\n';
+      }
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'ncdoc-dataset.csv';
+      a.click();
+      URL.revokeObjectURL(url);
     }
 
     function copyDatasetTable() {
