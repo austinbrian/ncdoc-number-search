@@ -1,2 +1,7 @@
 AGENTS.md
 offenders.json
+data/*.pdf
+data/*.bak.txt
+.env
+.wrangler/
+nc_offender_*_raw.html

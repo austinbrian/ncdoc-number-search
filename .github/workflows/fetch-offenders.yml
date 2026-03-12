@@ -1,0 +1,50 @@
+name: Fetch Offender Records
+
+on:
+  workflow_dispatch:
+    inputs:
+      batch_size:
+        description: 'Number of records to fetch (0 = all remaining)'
+        required: false
+        default: '100'
+      delay_ms:
+        description: 'Delay between requests in ms'
+        required: false
+        default: '1000'
+  schedule:
+    - cron: '0 6 * * 1' # Weekly on Monday at 6am UTC
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install jsdom
+
+      - name: Fetch offender records
+        env:
+          BATCH_SIZE: ${{ github.event.inputs.batch_size || '100' }}
+          DELAY_MS: ${{ github.event.inputs.delay_ms || '1000' }}
+        run: node scripts/fetch-offenders.mjs
+
+      - name: Commit updated dataset
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/dataset.json
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            TOTAL=$(node -e "const d=require('./data/dataset.json'); console.log(Object.keys(d).length)")
+            git commit -m "Update dataset: ${TOTAL} offender records"
+            git push
+          fi

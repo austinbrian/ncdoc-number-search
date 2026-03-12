@@ -201,6 +201,27 @@
     .errors-section ul { list-style: none; font-size: 0.85rem; color: var(--text-secondary); }
     .errors-section li { padding: 0.25rem 0; }
 
+    .tabs {
+      display: flex; gap: 0; margin-bottom: 1.5rem;
+      border-bottom: 2px solid var(--border);
+    }
+    .tab {
+      padding: 0.6rem 1.25rem; font-size: 0.9rem; font-weight: 600;
+      cursor: pointer; border: none; background: none;
+      color: var(--text-muted); border-bottom: 2px solid transparent;
+      margin-bottom: -2px; transition: color 0.15s, border-color 0.15s;
+    }
+    .tab:hover { color: var(--text-secondary); }
+    .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    .dataset-status {
+      font-size: 0.85rem; color: var(--text-secondary);
+      font-family: Georgia, 'Times New Roman', serif;
+      margin-bottom: 1rem;
+    }
+
     @media (max-width: 640px) {
       .container { padding: 1rem; }
       h1 { font-size: 1.35rem; }
@@ -218,6 +239,11 @@
     </div>
     <p class="subtitle">Look up offender records from the NC Department of Adult Correction public database.</p>
 
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('lookup')">Lookup</button>
+      <button class="tab" onclick="switchTab('dataset')">Dataset</button>
+    </div>
+
     <div class="modal-overlay" id="report-modal" onclick="if(event.target===this)closeReportModal()">
       <div class="modal">
         <h2>Report a Bug</h2>
@@ -233,6 +259,7 @@
       </div>
     </div>
 
+    <div class="tab-content active" id="tab-lookup">
     <div class="input-section">
       <label for="offender-input">Offender Numbers</label>
       <textarea id="offender-input" placeholder="Paste offender numbers here, one per line or separated by commas&#10;&#10;Example:&#10;0082606&#10;0117599, 0490165"></textarea>
@@ -287,6 +314,45 @@
       <h3>Lookup Errors</h3>
       <ul id="errors-list"></ul>
     </div>
+    </div><!-- end tab-lookup -->
+
+    <div class="tab-content" id="tab-dataset">
+      <div class="dataset-status" id="dataset-status">Loading dataset...</div>
+      <div class="results-section active" id="dataset-results-section" style="display:none;">
+        <div class="results-toolbar">
+          <h2>Dataset <span id="dataset-result-count" style="font-weight:400; font-size:0.85rem; color:var(--text-muted)"></span></h2>
+          <div class="toolbar-right">
+            <input type="text" class="search-box" id="dataset-search-box" placeholder="Filter results..." oninput="filterDatasetTable()">
+            <button class="btn-secondary toolbar-btn" onclick="copyDatasetTable()">Copy TSV</button>
+          </div>
+        </div>
+        <div class="table-wrapper">
+          <table id="dataset-table">
+            <thead>
+              <tr>
+                <th data-col="0" onclick="sortDatasetTable(0)">Offender # <span class="sort-arrow">&#9650;</span></th>
+                <th data-col="1" onclick="sortDatasetTable(1)">Name <span class="sort-arrow">&#9650;</span></th>
+                <th data-col="2" onclick="sortDatasetTable(2)">Sentence # <span class="sort-arrow">&#9650;</span></th>
+                <th data-col="3" onclick="sortDatasetTable(3)">Offense <span class="sort-arrow">&#9650;</span></th>
+                <th data-col="4" onclick="sortDatasetTable(4)">County <span class="sort-arrow">&#9650;</span></th>
+                <th data-col="5" onclick="sortDatasetTable(5)">Conviction Date <span class="sort-arrow">&#9650;</span></th>
+                <th data-col="6" onclick="sortDatasetTable(6)">Punishment Type <span class="sort-arrow">&#9650;</span></th>
+                <th data-col="7" onclick="sortDatasetTable(7)">Sentence Begin <span class="sort-arrow">&#9650;</span></th>
+                <th data-col="8" onclick="sortDatasetTable(8)">Actual Release <span class="sort-arrow">&#9650;</span></th>
+                <th data-col="9" onclick="sortDatasetTable(9)">Projected Release <span class="sort-arrow">&#9650;</span></th>
+                <th data-col="10" onclick="sortDatasetTable(10)">Early Reentry Date <span class="sort-arrow">&#9650;</span></th>
+              </tr>
+            </thead>
+            <tbody id="dataset-body"></tbody>
+          </table>
+        </div>
+        <div class="pagination" id="dataset-pagination">
+          <button class="btn-secondary" onclick="goToDatasetPage(datasetCurrentPage - 1)">Prev</button>
+          <span id="dataset-page-info"></span>
+          <button class="btn-secondary" onclick="goToDatasetPage(datasetCurrentPage + 1)">Next</button>
+        </div>
+      </div>
+    </div><!-- end tab-dataset -->
 
   </div>
 
@@ -812,6 +878,204 @@
       const original = btn.textContent;
       btn.textContent = msg;
       setTimeout(() => { btn.textContent = original; }, 1500);
+    }
+
+    // ── Tabs ──────────────────────────────────────────────────────
+
+    let datasetLoaded = false;
+    let datasetRows = [];
+    let datasetCurrentPage = 1;
+    let datasetSortCol = -1;
+    let datasetSortAsc = true;
+    let earlyReentries = {};
+
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+
+      const tabBtn = document.querySelector(`.tab[onclick*="${tabName}"]`);
+      const tabContent = document.getElementById(`tab-${tabName}`);
+      if (tabBtn) tabBtn.classList.add('active');
+      if (tabContent) tabContent.classList.add('active');
+
+      if (tabName === 'dataset' && !datasetLoaded) {
+        loadDataset();
+      }
+    }
+
+    async function loadDataset() {
+      const statusEl = document.getElementById('dataset-status');
+      statusEl.textContent = 'Loading dataset...';
+
+      try {
+        const [datasetResp, reentryResp] = await Promise.all([
+          fetch('data/dataset.json'),
+          fetch('data/early_reentries.json'),
+        ]);
+
+        if (!datasetResp.ok) {
+          statusEl.textContent = 'Dataset not yet available. Run the GitHub Action to fetch offender records.';
+          return;
+        }
+
+        const dataset = await datasetResp.json();
+
+        if (reentryResp.ok) {
+          earlyReentries = await reentryResp.json();
+        }
+
+        // Flatten dataset into rows and merge early reentry dates
+        datasetRows = [];
+        for (const [id, rows] of Object.entries(dataset)) {
+          const reentryDate = earlyReentries[id] || '';
+          for (const row of rows) {
+            if (!row.error) {
+              datasetRows.push({ ...row, earlyReentryDate: reentryDate });
+            }
+          }
+        }
+
+        datasetLoaded = true;
+        statusEl.style.display = 'none';
+        document.getElementById('dataset-results-section').style.display = 'block';
+        datasetCurrentPage = 1;
+        renderDatasetPage();
+        updateDatasetResultCount();
+      } catch (e) {
+        statusEl.textContent = `Failed to load dataset: ${e.message}`;
+      }
+    }
+
+    const DATASET_COL_KEYS = ['offenderId','name','sentenceNum','offense','county',
+      'convictionDate','punishmentType','sentenceBegin','actualRelease','projectedRelease','earlyReentryDate'];
+
+    function getFilteredDatasetRows() {
+      const query = document.getElementById('dataset-search-box').value.toLowerCase();
+      if (!query) return datasetRows;
+      return datasetRows.filter(row => {
+        const text = DATASET_COL_KEYS.map(k => row[k] || '').join(' ').toLowerCase();
+        return text.includes(query);
+      });
+    }
+
+    function renderDatasetPage() {
+      const tbody = document.getElementById('dataset-body');
+      tbody.innerHTML = '';
+      const filtered = getFilteredDatasetRows();
+      const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+      if (datasetCurrentPage > totalPages) datasetCurrentPage = totalPages;
+      const start = (datasetCurrentPage - 1) * PAGE_SIZE;
+      const pageRows = filtered.slice(start, start + PAGE_SIZE);
+
+      for (const row of pageRows) {
+        const tr = document.createElement('tr');
+        const docUrl = `${DOC_BASE}&offenderID=${row.offenderId}&searchOffenderId=${row.offenderId}`;
+        tr.innerHTML = `
+          <td class="id-cell">${esc(row.offenderId)}<a class="id-view-btn" href="${docUrl}" target="_blank" rel="noopener">View</a></td>
+          <td>${esc(row.name)}</td>
+          <td>${esc(row.sentenceNum)}</td>
+          <td>${esc(row.offense)}</td>
+          <td>${esc(row.county)}</td>
+          <td>${esc(row.convictionDate)}</td>
+          <td>${esc(row.punishmentType)}</td>
+          <td>${esc(row.sentenceBegin)}</td>
+          <td>${esc(row.actualRelease)}</td>
+          <td>${esc(row.projectedRelease)}</td>
+          <td>${esc(row.earlyReentryDate)}</td>
+        `;
+        tbody.appendChild(tr);
+      }
+
+      const info = document.getElementById('dataset-page-info');
+      const pagination = document.getElementById('dataset-pagination');
+      if (filtered.length <= PAGE_SIZE) {
+        pagination.style.display = 'none';
+      } else {
+        pagination.style.display = 'flex';
+        info.textContent = `Page ${datasetCurrentPage} of ${totalPages}`;
+        const buttons = pagination.querySelectorAll('button');
+        buttons[0].disabled = datasetCurrentPage <= 1;
+        buttons[1].disabled = datasetCurrentPage >= totalPages;
+      }
+    }
+
+    function goToDatasetPage(page) {
+      const filtered = getFilteredDatasetRows();
+      const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+      if (page < 1 || page > totalPages) return;
+      datasetCurrentPage = page;
+      renderDatasetPage();
+      updateDatasetResultCount();
+    }
+
+    function filterDatasetTable() {
+      datasetCurrentPage = 1;
+      renderDatasetPage();
+      updateDatasetResultCount();
+    }
+
+    function updateDatasetResultCount() {
+      const filtered = getFilteredDatasetRows();
+      const span = document.getElementById('dataset-result-count');
+      if (filtered.length === datasetRows.length) {
+        span.textContent = `(${datasetRows.length} rows)`;
+      } else {
+        span.textContent = `(${filtered.length} of ${datasetRows.length} rows)`;
+      }
+    }
+
+    function sortDatasetTable(colIdx) {
+      if (datasetSortCol === colIdx) {
+        datasetSortAsc = !datasetSortAsc;
+      } else {
+        datasetSortCol = colIdx;
+        datasetSortAsc = true;
+      }
+
+      document.querySelectorAll('#dataset-table th').forEach(th => {
+        th.classList.remove('sorted');
+        th.querySelector('.sort-arrow').innerHTML = '&#9650;';
+      });
+      const activeHeader = document.querySelector(`#dataset-table th[data-col="${colIdx}"]`);
+      activeHeader.classList.add('sorted');
+      activeHeader.querySelector('.sort-arrow').innerHTML = datasetSortAsc ? '&#9650;' : '&#9660;';
+
+      const key = DATASET_COL_KEYS[colIdx];
+      datasetRows.sort((a, b) => {
+        const valA = (a[key] || '').trim();
+        const valB = (b[key] || '').trim();
+
+        const dateA = parseDate(valA);
+        const dateB = parseDate(valB);
+        if (dateA && dateB) {
+          return datasetSortAsc ? dateA - dateB : dateB - dateA;
+        }
+
+        const cmp = valA.toLowerCase().localeCompare(valB.toLowerCase());
+        return datasetSortAsc ? cmp : -cmp;
+      });
+
+      datasetCurrentPage = 1;
+      renderDatasetPage();
+    }
+
+    function copyDatasetTable() {
+      const filtered = getFilteredDatasetRows();
+      const headers = ['Offender #','Name','Sentence #','Offense','County',
+        'Conviction Date','Punishment Type','Sentence Begin','Actual Release',
+        'Projected Release','Early Reentry Date'];
+      let tsv = headers.join('\t') + '\n';
+      for (const row of filtered) {
+        tsv += DATASET_COL_KEYS.map(k => row[k] || '').join('\t') + '\n';
+      }
+      navigator.clipboard.writeText(tsv).then(() => {
+        const btn = document.querySelector('#tab-dataset .toolbar-btn');
+        if (btn) {
+          const orig = btn.textContent;
+          btn.textContent = 'Copied!';
+          setTimeout(() => { btn.textContent = orig; }, 1500);
+        }
+      });
     }
   </script>
 </body>
