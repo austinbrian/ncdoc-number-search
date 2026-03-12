@@ -35,11 +35,33 @@ The GitHub token needs `Issues: Read and write` permission on this repo.
 
 ## Data
 
-`data/offender_ids.txt` contains offender IDs extracted from the source PDF. These can be pasted directly into the lookup tool.
+- `data/offender_ids.txt` — 4,234 offender IDs extracted from the source PDF
+- `data/early_reentries.json` — early reentry dates mapped by offender ID, extracted from the PDF
+- `data/dataset.json` — pre-fetched offender records (built by the GitHub Action)
+
+## Dataset tab
+
+The **Dataset** tab displays pre-fetched records from `data/dataset.json`, merged with early reentry dates. This lets users browse all records without triggering live lookups. The dataset includes an "Early Reentry Date" column not available through the standard DOC lookup.
+
+### Building the dataset
+
+A GitHub Action (`fetch-offenders.yml`) batch-fetches records from the NC DAC site via the Cloudflare Worker proxy:
+
+- **Manual trigger**: Go to Actions > "Fetch Offender Records" > Run workflow. Set batch size (default 100) and request delay.
+- **Scheduled**: Runs weekly on Mondays at 6am UTC.
+- **Resume support**: Skips IDs already in `dataset.json`, so you can run it repeatedly to build up the full dataset.
+
+To run locally:
+
+```bash
+npm install jsdom
+node scripts/fetch-offenders.mjs
+```
+
+Set `BATCH_SIZE` and `DELAY_MS` environment variables to control pacing.
 
 ## Usage
 
 1. Go to https://austinbrian.github.io/ncdoc-number-search/
-2. Paste offender numbers (comma, space, or newline separated)
-3. Click **Look Up**
-4. Filter, sort, or copy results as TSV
+2. **Lookup tab**: Paste offender numbers, click **Look Up**, filter/sort/copy results
+3. **Dataset tab**: Browse pre-fetched records with early reentry dates
