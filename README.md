@@ -61,7 +61,7 @@ Also add `UPLOAD_TOKEN` as a GitHub repo secret and set `WORKER_URL` as a repo v
 ## Data sources
 
 - **Offender records**: Fetched from the [NC DAC Offender Public Information](https://webapps.doc.state.nc.us/opi/offendersearch.do?method=view) site, which provides sentence history, offenses, and release dates for offenders in North Carolina's correctional system.
-- **Early reentry dates**: Extracted from the *NCDPS Adult Correction Report of Reentries*, a PDF report listing offenders participating in North Carolina's early release program (reporting period Feb–Aug 2021). The report contains 4,234 offender IDs with their early reentry dates.
+- **Early reentry dates**: Extracted from the *NCDPS Adult Correction Report of Reentries*, a PDF report listing offenders participating in North Carolina's early release program (reporting period Feb–Aug 2021). The report contains 4,234 offender IDs with their early reentry dates. Extraction used `pdftotext -raw` (poppler) and a Python script that parsed each line for a 7-digit offender ID and took the rightmost date on each line as the early reentry date. When an offender appeared multiple times in the PDF (which is ordered chronologically Feb–Aug 2021), the last occurrence overwrites earlier ones, so the most recent early reentry date is kept.
 
 ### Data files
 
