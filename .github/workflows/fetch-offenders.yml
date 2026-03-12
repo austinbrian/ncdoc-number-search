@@ -19,6 +19,10 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
 
     steps:
       - uses: actions/checkout@v4
@@ -36,6 +40,9 @@ jobs:
           DELAY_MS: ${{ github.event.inputs.delay_ms || '1000' }}
         run: node scripts/fetch-offenders.mjs
 
+      - name: Clean early reentry dates
+        run: node scripts/clean-early-reentries.mjs
+
       - name: Commit updated dataset
         run: |
           git config user.name "github-actions[bot]"
@@ -48,3 +55,14 @@ jobs:
             git commit -m "Update dataset: ${TOTAL} offender records"
             git push
           fi
+
+      - name: Deploy to GitHub Pages
+        run: rm -rf node_modules package.json package-lock.json
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+      - uses: actions/deploy-pages@v4

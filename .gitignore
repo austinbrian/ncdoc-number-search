@@ -5,3 +5,6 @@ data/*.bak.txt
 .env
 .wrangler/
 nc_offender_*_raw.html
+node_modules/
+package.json
+package-lock.json
