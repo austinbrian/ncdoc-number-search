@@ -101,8 +101,31 @@
     .results-toolbar h2 { font-size: 1.25rem; font-weight: 600; white-space: nowrap; }
     .toolbar-right { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
 
+    .filter-pill {
+      display: inline-flex; align-items: center; gap: 0.3rem;
+      background: var(--accent); color: #fff; border-radius: 12px;
+      padding: 0.15rem 0.5rem; font-size: 0.72rem; white-space: nowrap;
+    }
+    .filter-pill button {
+      background: none; border: none; color: #fff; cursor: pointer;
+      font-size: 0.8rem; line-height: 1; padding: 0; opacity: 0.8;
+    }
+    .filter-pill button:hover { opacity: 1; }
+    .filterable { cursor: pointer; }
+    .filterable:hover { text-decoration: underline; }
+
+    .search-wrap {
+      position: relative; display: inline-flex; align-items: center;
+    }
+    .search-clear {
+      position: absolute; right: 6px; background: none; border: none;
+      cursor: pointer; color: var(--text-muted); font-size: 0.9rem;
+      line-height: 1; padding: 0; display: none;
+    }
+    .search-clear:hover { color: var(--text-primary); }
+
     .search-box {
-      padding: 0.4rem 0.75rem; border: 1px solid var(--border); border-radius: 4px;
+      padding: 0.4rem 1.4rem 0.4rem 0.75rem; border: 1px solid var(--border); border-radius: 4px;
       font-size: 0.8rem; width: 200px; outline: none;
     }
     .search-box:focus { border-color: var(--accent); }
@@ -323,7 +346,11 @@
         <div class="results-toolbar">
           <h2>Dataset <span id="dataset-result-count" style="font-weight:400; font-size:0.85rem; color:var(--text-muted)"></span></h2>
           <div class="toolbar-right">
-            <input type="text" class="search-box" id="dataset-search-box" placeholder="Filter results..." oninput="filterDatasetTable()">
+            <div id="dataset-filter-pills"></div>
+            <span class="search-wrap">
+              <input type="text" class="search-box" id="dataset-search-box" placeholder="Filter results..." oninput="filterDatasetTable()">
+              <button class="search-clear" id="dataset-search-clear" onclick="clearDatasetSearch()">&times;</button>
+            </span>
             <button class="btn-secondary toolbar-btn" onclick="copyDatasetTable()">Copy TSV</button>
             <button class="btn-secondary toolbar-btn" onclick="downloadDatasetCSV()">Download CSV</button>
           </div>
@@ -944,14 +971,60 @@
 
     const DATASET_COL_KEYS = ['offenderId','name','sentenceNum','offense','county',
       'convictionDate','punishmentType','sentenceBegin','actualRelease','projectedRelease','earlyReentryDate'];
+    const FILTERABLE_KEYS = ['name','sentenceNum','offense','county','punishmentType'];
+
+    const datasetFilters = new Set();
+
+    function addDatasetFilter(value) {
+      datasetFilters.add(value);
+      datasetCurrentPage = 1;
+      renderDatasetFilterPills();
+      renderDatasetPage();
+      updateDatasetResultCount();
+    }
+
+    function removeDatasetFilter(value) {
+      datasetFilters.delete(value);
+      datasetCurrentPage = 1;
+      renderDatasetFilterPills();
+      renderDatasetPage();
+      updateDatasetResultCount();
+    }
+
+    function renderDatasetFilterPills() {
+      const container = document.getElementById('dataset-filter-pills');
+      container.innerHTML = '';
+      for (const val of datasetFilters) {
+        const pill = document.createElement('span');
+        pill.className = 'filter-pill';
+        pill.textContent = val;
+        const btn = document.createElement('button');
+        btn.innerHTML = '&times;';
+        btn.onclick = () => removeDatasetFilter(val);
+        pill.appendChild(btn);
+        container.appendChild(pill);
+      }
+    }
 
     function getFilteredDatasetRows() {
       const query = document.getElementById('dataset-search-box').value.toLowerCase();
-      if (!query) return datasetRows;
-      return datasetRows.filter(row => {
-        const text = DATASET_COL_KEYS.map(k => row[k] || '').join(' ').toLowerCase();
-        return text.includes(query);
-      });
+      let rows = datasetRows;
+      if (query) {
+        rows = rows.filter(row => {
+          const text = DATASET_COL_KEYS.map(k => row[k] || '').join(' ').toLowerCase();
+          return text.includes(query);
+        });
+      }
+      if (datasetFilters.size > 0) {
+        rows = rows.filter(row => {
+          const values = DATASET_COL_KEYS.map(k => (row[k] || '').toLowerCase());
+          for (const f of datasetFilters) {
+            if (!values.some(v => v === f.toLowerCase())) return false;
+          }
+          return true;
+        });
+      }
+      return rows;
     }
 
     function renderDatasetPage() {
@@ -968,12 +1041,12 @@
         const docUrl = `${DOC_BASE}&offenderID=${row.offenderId}&searchOffenderId=${row.offenderId}`;
         tr.innerHTML = `
           <td class="id-cell">${esc(row.offenderId)}<a class="id-view-btn" href="${docUrl}" target="_blank" rel="noopener">View</a></td>
-          <td>${esc(row.name)}</td>
-          <td>${esc(row.sentenceNum)}</td>
-          <td>${esc(row.offense)}</td>
-          <td>${esc(row.county)}</td>
+          <td><span class="filterable" onclick="addDatasetFilter('${esc(row.name).replace(/'/g, "\\'")}')">${esc(row.name)}</span></td>
+          <td><span class="filterable" onclick="addDatasetFilter('${esc(row.sentenceNum).replace(/'/g, "\\'")}')">${esc(row.sentenceNum)}</span></td>
+          <td><span class="filterable" onclick="addDatasetFilter('${esc(row.offense).replace(/'/g, "\\'")}')">${esc(row.offense)}</span></td>
+          <td><span class="filterable" onclick="addDatasetFilter('${esc(row.county).replace(/'/g, "\\'")}')">${esc(row.county)}</span></td>
           <td>${esc(row.convictionDate)}</td>
-          <td>${esc(row.punishmentType)}</td>
+          <td><span class="filterable" onclick="addDatasetFilter('${esc(row.punishmentType).replace(/'/g, "\\'")}')">${esc(row.punishmentType)}</span></td>
           <td>${esc(row.sentenceBegin)}</td>
           <td>${esc(row.actualRelease)}</td>
           <td>${esc(row.projectedRelease)}</td>
@@ -1005,9 +1078,19 @@
     }
 
     function filterDatasetTable() {
+      const box = document.getElementById('dataset-search-box');
+      document.getElementById('dataset-search-clear').style.display = box.value ? 'block' : 'none';
       datasetCurrentPage = 1;
       renderDatasetPage();
       updateDatasetResultCount();
+    }
+
+    function clearDatasetSearch() {
+      const box = document.getElementById('dataset-search-box');
+      box.value = '';
+      document.getElementById('dataset-search-clear').style.display = 'none';
+      filterDatasetTable();
+      box.focus();
     }
 
     function updateDatasetResultCount() {
