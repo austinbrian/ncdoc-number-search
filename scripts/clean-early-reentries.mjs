@@ -3,9 +3,9 @@
 /**
  * Post-processing cleanup for early reentry dates in the dataset.
  *
- * Merges early reentry dates into dataset.json, then nulls out the date
- * on any row where actual release came before the early reentry date.
- * Think: SET early_reentry_date = NULL WHERE early_reentry_date > actual_release_date
+ * Reads early_reentries.json (arrays of dates per offender) and matches
+ * each date to the offense row where sentenceBegin <= earlyReentryDate <= actualRelease.
+ * If multiple dates match a row, the latest is used. Unmatched rows get null.
  */
 
 import { readFileSync, writeFileSync } from 'fs';
@@ -29,26 +29,45 @@ function main() {
   let nulled = 0;
 
   for (const [id, rows] of Object.entries(dataset)) {
-    const reentryStr = earlyReentries[id] || null;
+    const dateStrings = earlyReentries[id] || null;
 
     for (const row of rows) {
       if (row.error) continue;
       totalRows++;
 
-      if (!reentryStr) {
+      if (!dateStrings) {
         row.earlyReentryDate = null;
         continue;
       }
 
-      const reentryDate = parseDate(reentryStr);
+      const sentenceBegin = parseDate(row.sentenceBegin);
       const actualRelease = parseDate(row.actualRelease);
 
-      if (actualRelease && reentryDate && actualRelease < reentryDate) {
+      // Find dates where sentenceBegin <= earlyReentryDate <= actualRelease
+      let bestDate = null;
+      let bestParsed = null;
+
+      for (const ds of dateStrings) {
+        const d = parseDate(ds);
+        if (!d) continue;
+
+        const afterBegin = !sentenceBegin || d >= sentenceBegin;
+        const beforeRelease = !actualRelease || d <= actualRelease;
+
+        if (afterBegin && beforeRelease) {
+          if (!bestParsed || d > bestParsed) {
+            bestDate = ds;
+            bestParsed = d;
+          }
+        }
+      }
+
+      if (bestDate) {
+        row.earlyReentryDate = bestDate;
+        assigned++;
+      } else {
         row.earlyReentryDate = null;
         nulled++;
-      } else {
-        row.earlyReentryDate = reentryStr;
-        assigned++;
       }
     }
   }
@@ -57,7 +76,7 @@ function main() {
 
   console.log(`Processed ${totalRows} rows`);
   console.log(`Assigned early reentry date: ${assigned}`);
-  console.log(`Nulled (actual release before early reentry): ${nulled}`);
+  console.log(`Nulled (no matching date in range): ${nulled}`);
 }
 
 main();

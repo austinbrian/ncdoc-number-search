@@ -61,17 +61,17 @@ Also add `UPLOAD_TOKEN` as a GitHub repo secret and set `WORKER_URL` as a repo v
 ## Data sources
 
 - **Offender records**: Fetched from the [NC DAC Offender Public Information](https://webapps.doc.state.nc.us/opi/offendersearch.do?method=view) site, which provides sentence history, offenses, and release dates for offenders in North Carolina's correctional system.
-- **Early reentry dates**: Extracted from the *NCDPS Adult Correction Report of Reentries*, a PDF report listing offenders participating in North Carolina's early release program (reporting period Feb–Aug 2021). The report contains 4,234 offender IDs with their early reentry dates. Extraction used `pdftotext -raw` (poppler) and a Python script that parsed each line for a 7-digit offender ID and took the rightmost date on each line as the early reentry date. When an offender appeared multiple times in the PDF (which is ordered chronologically Feb–Aug 2021), the last occurrence overwrites earlier ones, so the most recent early reentry date is kept.
+- **Early reentry dates**: Extracted from the *NCDPS Adult Correction Report of Reentries*, a PDF report listing offenders participating in North Carolina's early release program (reporting period Feb–Aug 2021). Extraction uses `pdftotext -raw` (poppler) via `scripts/parse-early-reentries.mjs`, which identifies primary data lines (7-digit ID followed by a race keyword) and takes the rightmost date as the early reentry date. Offenders who appear multiple times get an array of all distinct dates. The cleanup script (`scripts/clean-early-reentries.mjs`) matches each date to the offense row where `sentenceBegin <= earlyReentryDate <= actualRelease`.
 
 ### Data files
 
 - `data/offender_ids.txt` — 4,234 offender IDs extracted from the reentries report
-- `data/early_reentries.json` — early reentry dates mapped by offender ID
+- `data/early_reentries.json` — arrays of early reentry dates per offender ID (e.g., `{"0405341": ["02/25/2021", "04/20/2021"]}`)
 - `data/dataset.json` — pre-fetched offender records with early reentry dates baked in (stored in Cloudflare R2, not committed to git)
 
 ## Dataset tab
 
-The **Dataset** tab displays pre-fetched records from `data/dataset.json`. This lets users browse all records without triggering live lookups. The dataset includes an "Early Reentry Date" column sourced from the NCDPS reentries report — this date is not available through the standard DOC lookup. Early reentry dates are nulled on rows where the actual release date predates the early reentry date (which occurs when an offender has multiple convictions).
+The **Dataset** tab displays pre-fetched records from `data/dataset.json`. This lets users browse all records without triggering live lookups. The dataset includes an "Early Reentry Date" column sourced from the NCDPS reentries report — this date is not available through the standard DOC lookup. Each early reentry date is matched to the offense row where `sentenceBegin <= earlyReentryDate <= actualRelease`; unmatched rows get null.
 
 ### Building the dataset
 

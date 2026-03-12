@@ -954,9 +954,12 @@
           for (const row of rows) {
             if (!row.error) {
               let erd = row.earlyReentryDate || '';
-              if (erd && row.sentenceBegin && row.sentenceBegin !== 'N/A') {
-                const parse = s => { const [m,d,y] = s.split('/'); return new Date(y, m-1, d); };
-                if (parse(erd) < parse(row.sentenceBegin)) erd = '';
+              if (erd) {
+                const parse = s => { if (!s || s === 'N/A' || s === '*') return null; const [m,d,y] = s.split('/'); return new Date(y, m-1, d); };
+                const erdDate = parse(erd);
+                const beginDate = parse(row.sentenceBegin);
+                const releaseDate = parse(row.actualRelease);
+                if (erdDate && ((beginDate && erdDate < beginDate) || (releaseDate && erdDate > releaseDate))) erd = '';
               }
               datasetRows.push({ ...row, earlyReentryDate: erd });
             }
