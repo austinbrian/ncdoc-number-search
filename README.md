@@ -33,15 +33,20 @@ npx wrangler secret put GITHUB_TOKEN --name ncdoc-proxy
 
 The GitHub token needs `Issues: Read and write` permission on this repo.
 
-## Data
+## Data sources
 
-- `data/offender_ids.txt` — 4,234 offender IDs extracted from the source PDF
-- `data/early_reentries.json` — early reentry dates mapped by offender ID, extracted from the PDF
-- `data/dataset.json` — pre-fetched offender records (built by the GitHub Action)
+- **Offender records**: Fetched from the [NC DAC Offender Public Information](https://webapps.doc.state.nc.us/opi/offendersearch.do?method=view) site, which provides sentence history, offenses, and release dates for offenders in North Carolina's correctional system.
+- **Early reentry dates**: Extracted from the *NCDPS Adult Correction Report of Reentries*, a PDF report listing offenders participating in North Carolina's early release program (reporting period Feb–Aug 2021). The report contains 4,234 offender IDs with their early reentry dates.
+
+### Data files
+
+- `data/offender_ids.txt` — 4,234 offender IDs extracted from the reentries report
+- `data/early_reentries.json` — early reentry dates mapped by offender ID
+- `data/dataset.json` — pre-fetched offender records with early reentry dates baked in
 
 ## Dataset tab
 
-The **Dataset** tab displays pre-fetched records from `data/dataset.json`, merged with early reentry dates. This lets users browse all records without triggering live lookups. The dataset includes an "Early Reentry Date" column not available through the standard DOC lookup.
+The **Dataset** tab displays pre-fetched records from `data/dataset.json`. This lets users browse all records without triggering live lookups. The dataset includes an "Early Reentry Date" column sourced from the NCDPS reentries report — this date is not available through the standard DOC lookup. Early reentry dates are nulled on rows where the actual release date predates the early reentry date (which occurs when an offender has multiple convictions).
 
 ### Building the dataset
 
