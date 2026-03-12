@@ -1,5 +1,6 @@
 AGENTS.md
 offenders.json
+data/dataset.json
 data/*.pdf
 data/*.bak.txt
 .env

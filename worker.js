@@ -1,6 +1,7 @@
-// Cloudflare Worker — CORS proxy for NC DOC lookups + bug report endpoint
-// Deploy: npx wrangler deploy worker.js --name ncdoc-proxy --compatibility-date 2026-03-11
-// Set the GitHub token: npx wrangler secret put GITHUB_TOKEN
+// Cloudflare Worker — CORS proxy for NC DOC lookups, bug reports, and R2 data serving
+// Deploy: npx wrangler deploy
+// Secrets: npx wrangler secret put GITHUB_TOKEN
+//          npx wrangler secret put UPLOAD_TOKEN
 
 const ALLOWED_ORIGIN = '*';
 const TARGET_HOST = 'https://webapps.doc.state.nc.us';
@@ -13,6 +14,16 @@ export default {
     }
 
     const url = new URL(request.url);
+
+    // Serve data files from R2
+    if (url.pathname.startsWith('/data/') && request.method === 'GET') {
+      return handleDataGet(url.pathname, env);
+    }
+
+    // Upload data files to R2
+    if (url.pathname.startsWith('/data/') && request.method === 'PUT') {
+      return handleDataPut(request, url.pathname, env);
+    }
 
     // Bug report endpoint
     if (url.pathname === '/report' && request.method === 'POST') {
@@ -42,6 +53,52 @@ export default {
     }
   },
 };
+
+const R2_ALLOWED_KEYS = ['dataset.json', 'early_reentries.json'];
+
+async function handleDataGet(pathname, env) {
+  const key = pathname.replace('/data/', '');
+  if (!R2_ALLOWED_KEYS.includes(key)) {
+    return jsonResponse({ error: 'Not found' }, 404);
+  }
+
+  const object = await env.R2.get(key);
+  if (!object) {
+    return jsonResponse({ error: 'Not found' }, 404);
+  }
+
+  return new Response(object.body, {
+    headers: {
+      ...corsHeaders(),
+      'Content-Type': 'application/json',
+      'Cache-Control': 'public, max-age=300',
+      'ETag': object.httpEtag,
+    },
+  });
+}
+
+async function handleDataPut(request, pathname, env) {
+  const token = env.UPLOAD_TOKEN;
+  if (!token) {
+    return jsonResponse({ error: 'Upload not configured' }, 500);
+  }
+
+  const auth = request.headers.get('Authorization');
+  if (auth !== `Bearer ${token}`) {
+    return jsonResponse({ error: 'Unauthorized' }, 401);
+  }
+
+  const key = pathname.replace('/data/', '');
+  if (!R2_ALLOWED_KEYS.includes(key)) {
+    return jsonResponse({ error: 'Invalid key' }, 400);
+  }
+
+  await env.R2.put(key, request.body, {
+    httpMetadata: { contentType: 'application/json' },
+  });
+
+  return jsonResponse({ success: true, key });
+}
 
 async function handleBugReport(request, env) {
   const token = env.GITHUB_TOKEN;
@@ -108,7 +165,7 @@ function jsonResponse(data, status = 200) {
 function corsHeaders() {
   return {
     'Access-Control-Allow-Origin': ALLOWED_ORIGIN,
-    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   };
 }

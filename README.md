@@ -21,17 +21,42 @@ The site deploys automatically via GitHub Actions on push to `main`.
 
 ### Cloudflare Worker
 
-The worker handles two things: proxying NC DAC requests and creating GitHub issues for bug reports.
+The worker handles three things: proxying NC DAC requests, creating GitHub issues for bug reports, and serving dataset files from R2.
 
 ```bash
 # Deploy the worker
-npx wrangler deploy worker.js --name ncdoc-proxy --compatibility-date 2026-03-11
+npx wrangler deploy
 
-# Set the GitHub token for bug report creation
-npx wrangler secret put GITHUB_TOKEN --name ncdoc-proxy
+# Set secrets
+npx wrangler secret put GITHUB_TOKEN   # needs Issues: Read and write on this repo
+npx wrangler secret put UPLOAD_TOKEN    # shared with GitHub Action for dataset uploads
 ```
 
-The GitHub token needs `Issues: Read and write` permission on this repo.
+### Cloudflare R2 (dataset storage)
+
+The pre-fetched dataset (`dataset.json`) is stored in Cloudflare R2 instead of git to keep the repo lean.
+
+```bash
+# One-time setup
+npx wrangler r2 bucket create ncdoc-data
+npx wrangler secret put UPLOAD_TOKEN
+
+# Upload early_reentries.json (one-time)
+curl -X PUT \
+  -H "Authorization: Bearer <your-upload-token>" \
+  -H "Content-Type: application/json" \
+  --data-binary @data/early_reentries.json \
+  https://ncdoc-proxy.austin-brian.workers.dev/data/early_reentries.json
+
+# Upload existing dataset.json
+curl -X PUT \
+  -H "Authorization: Bearer <your-upload-token>" \
+  -H "Content-Type: application/json" \
+  --data-binary @data/dataset.json \
+  https://ncdoc-proxy.austin-brian.workers.dev/data/dataset.json
+```
+
+Also add `UPLOAD_TOKEN` as a GitHub repo secret and set `WORKER_URL` as a repo variable (`https://ncdoc-proxy.austin-brian.workers.dev`).
 
 ## Data sources
 
@@ -42,7 +67,7 @@ The GitHub token needs `Issues: Read and write` permission on this repo.
 
 - `data/offender_ids.txt` — 4,234 offender IDs extracted from the reentries report
 - `data/early_reentries.json` — early reentry dates mapped by offender ID
-- `data/dataset.json` — pre-fetched offender records with early reentry dates baked in
+- `data/dataset.json` — pre-fetched offender records with early reentry dates baked in (stored in Cloudflare R2, not committed to git)
 
 ## Dataset tab
 
@@ -54,7 +79,7 @@ A GitHub Action (`fetch-offenders.yml`) batch-fetches records from the NC DAC si
 
 - **Manual trigger**: Go to Actions > "Fetch Offender Records" > Run workflow. Set batch size (default 100) and request delay.
 - **Scheduled**: Runs weekly on Mondays at 6am UTC.
-- **Resume support**: Skips IDs already in `dataset.json`, so you can run it repeatedly to build up the full dataset.
+- **Resume support**: Downloads the current dataset from R2 at the start, skips IDs already fetched, and uploads the updated dataset back to R2 when done.
 
 To run locally:
 

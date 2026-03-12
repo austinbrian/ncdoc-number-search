@@ -17,12 +17,6 @@ on:
 jobs:
   fetch:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
 
     steps:
       - uses: actions/checkout@v4
@@ -34,6 +28,12 @@ jobs:
       - name: Install dependencies
         run: npm install jsdom
 
+      - name: Download current dataset from R2
+        run: |
+          curl -sf "${{ vars.WORKER_URL }}/data/dataset.json" -o data/dataset.json || echo '{}' > data/dataset.json
+          TOTAL=$(node -e "const d=JSON.parse(require('fs').readFileSync('data/dataset.json','utf-8')); console.log(Object.keys(d).length)")
+          echo "Existing dataset has ${TOTAL} entries"
+
       - name: Fetch offender records
         env:
           BATCH_SIZE: ${{ github.event.inputs.batch_size || '100' }}
@@ -43,26 +43,11 @@ jobs:
       - name: Clean early reentry dates
         run: node scripts/clean-early-reentries.mjs
 
-      - name: Commit updated dataset
+      - name: Upload dataset to R2
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/dataset.json
-          if git diff --staged --quiet; then
-            echo "No changes to commit"
-          else
-            TOTAL=$(node -e "const d=require('./data/dataset.json'); console.log(Object.keys(d).length)")
-            git commit -m "Update dataset: ${TOTAL} offender records"
-            git push
-          fi
-
-      - name: Deploy to GitHub Pages
-        run: rm -rf node_modules package.json package-lock.json
-
-      - uses: actions/configure-pages@v5
-
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: .
-
-      - uses: actions/deploy-pages@v4
+          curl -sf -X PUT \
+            -H "Authorization: Bearer ${{ secrets.UPLOAD_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            --data-binary @data/dataset.json \
+            "${{ vars.WORKER_URL }}/data/dataset.json"
+          echo "Dataset uploaded to R2"

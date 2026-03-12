@@ -909,7 +909,7 @@
       statusEl.textContent = 'Loading dataset...';
 
       try {
-        const datasetResp = await fetch('data/dataset.json');
+        const datasetResp = await fetch(`${WORKER_URL}/data/dataset.json`);
 
         if (!datasetResp.ok) {
           statusEl.textContent = 'Dataset not yet available. Run the GitHub Action to fetch offender records.';
