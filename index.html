@@ -953,7 +953,12 @@
         for (const [id, rows] of Object.entries(dataset)) {
           for (const row of rows) {
             if (!row.error) {
-              datasetRows.push({ ...row, earlyReentryDate: row.earlyReentryDate || '' });
+              let erd = row.earlyReentryDate || '';
+              if (erd && row.sentenceBegin && row.sentenceBegin !== 'N/A') {
+                const parse = s => { const [m,d,y] = s.split('/'); return new Date(y, m-1, d); };
+                if (parse(erd) < parse(row.sentenceBegin)) erd = '';
+              }
+              datasetRows.push({ ...row, earlyReentryDate: erd });
             }
           }
         }
